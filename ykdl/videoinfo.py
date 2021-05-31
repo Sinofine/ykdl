@@ -22,7 +22,8 @@ class VideoInfo():
                                       'referer',
                                       'header',
                                       'proxy',
-                                      'rangefetch'
+                                      'rangefetch',
+                                      'cookie'
                                      ]}
 
     def print_stream_info(self, stream_id, show_all=False):

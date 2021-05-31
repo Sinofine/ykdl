@@ -23,7 +23,7 @@ logger = logging.getLogger("YKDL")
 
 from ykdl.common import url_to_module
 from ykdl.compact import ProxyHandler, compact_str, urlparse, getproxies
-from ykdl.util.html import add_default_handler, install_default_handlers
+from ykdl.util.html import add_default_handler, add_header, install_default_handlers
 from ykdl.util.wrap import launch_player, launch_ffmpeg, launch_ffmpeg_download
 from ykdl.util.m3u8_wrap import load_m3u8
 from ykdl.util.download import save_urls
@@ -37,6 +37,7 @@ def arg_parser():
     parser.add_argument('-l', '--playlist', action='store_true', default=False, help="Download as a playlist.")
     parser.add_argument('-i', '--info', action='store_true', default=False, help="Display the information of videos without downloading.")
     parser.add_argument('-J', '--json', action='store_true', default=False, help="Display info in json format.")
+    parser.add_argument('-c', '--cookie', action='store_true', default=False, help="Specify cookie bundled in requests.")
     parser.add_argument('-F', '--format',  help="Video format code, or resolution level 0, 1, ...")
     parser.add_argument('-o', '--output-dir', default='.', help="Set the output directory for downloaded videos.")
     parser.add_argument('-O', '--output-name', default='', help="Downloaded videos with the NAME you want")
@@ -81,7 +82,7 @@ def download(urls, name, ext, live=False):
 
     # OK check m3u8_internal
     if not m3u8_internal:
-        launch_ffmpeg_download(urls[0], name + '.' + ext)
+        launch_ffmpeg_download(urls[0], name + '.' + ext, args.cookie)
     else:
         if save_urls(urls, name, ext, jobs=args.jobs,
                      fail_confirm=not args.no_fail_confirm,
@@ -140,6 +141,8 @@ def handle_videoinfo(info, index=0):
                 player_args['rangefetch']['proxy'] = args.proxy
         player_args['title'] = info.title
         player_args['subs'] = args.no_sub or [sub['src'] for sub in info.subtitles]
+        if args.cookie:
+            player_args['header'] = '\'Cookie:'+ args.cookie +' \''
         launch_player(args.player, urls, ext, **player_args)
     else:
         download(urls, name, ext, live)

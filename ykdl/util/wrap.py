@@ -11,7 +11,7 @@ from logging import getLogger
 logger = getLogger("wrap")
 
 from ykdl.compact import compact_tempfile
-from .html import fake_headers
+from .html import fake_headers, add_header
 
 posix = os.name == 'posix'
 nt = os.name == 'nt'
@@ -177,14 +177,15 @@ def launch_ffmpeg(basename, ext, lenth):
             except:
                 pass
 
-def launch_ffmpeg_download(url, name):
+def launch_ffmpeg_download(url, name, cookie=False):
     print('Now downloading: %s' % name)
     logger.warning('''
 =================================
   stop downloading by press 'q'
 =================================
 ''')
-
+    if cookie:
+        add_header('Cookie',cookie)
     cmd = [ 'ffmpeg',
             '-y', '-hide_banner',
             '-headers', ''.join('%s: %s\r\n' % x for x in fake_headers.items()),

@@ -51,8 +51,8 @@ class BiliBase(VideoExtractor):
 
         def get_video_info(qn=0):
             # need login with "qn=112"
-            if int(qn) > 80:
-                return
+            #if int(qn) > 80:
+            #    return
 
             api_url = self.get_api_url(qn)
             html = get_content(api_url)
