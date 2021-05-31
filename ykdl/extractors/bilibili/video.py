@@ -44,6 +44,7 @@ class BiliVideo(BiliBase):
             ('cid', self.vid),
             ('platform', 'html5'),
             ('player', 0),
+            ('fourk', 1)
             ('qn', qn)
         ])
         return sign_api_url(api_url, params_str, SECRETKEY)

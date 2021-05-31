@@ -44,6 +44,8 @@ class BiliBase(VideoExtractor):
         info = VideoInfo(self.name)
         info.extra['referer'] = 'https://www.bilibili.com/'
         info.extra['ua'] = fake_headers['User-Agent']
+        if fake_headers['Cookie']:
+            info.extra['cookie'] = fake_headers['Cookie']
 
         self.vid, info.title, info.artist = self.get_page_info()
 
