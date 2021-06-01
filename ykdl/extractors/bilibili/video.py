@@ -13,7 +13,7 @@ import json
 
 APPKEY = 'iVGUTjsxvpLeuDCf'
 SECRETKEY = 'aHRmhWMLkdeMuILqORnYZocwMBpMEOdt'
-api_url = 'https://interface.bilibili.com/v2/playurl'
+api_url = 'https://api.bilibili.com/x/player/playurl'
 
 class BiliVideo(BiliBase):
     name = u'哔哩哔哩 (Bilibili)'
@@ -22,6 +22,7 @@ class BiliVideo(BiliBase):
         page_index = match1(self.url, '\?p=(\d+)', 'index_(\d+)\.') or '1'
         html = get_content(self.url)
         date = json.loads(match1(html, '__INITIAL_STATE__=({.+?});'))['videoData']
+        bvid = date['bvid']
         title = date['title']
         artist = date['owner']['name']
         pages = date['pages']
@@ -36,15 +37,14 @@ class BiliVideo(BiliBase):
                    title = u'{} - {}'.format(title, subtitle)
                break
 
-        return vid, title, artist
+        return bvid, vid, title, artist
 
     def get_api_url(self, qn):
         params_str = urlencode([
-            ('appkey', APPKEY),
+            ('bvid',self.bvid),
             ('cid', self.vid),
-            ('platform', 'html5'),
             ('player', 0),
-            ('fourk', 1),
+            ('fourk',1),
             ('qn', qn)
         ])
         return sign_api_url(api_url, params_str, SECRETKEY)

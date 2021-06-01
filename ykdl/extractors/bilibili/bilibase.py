@@ -8,7 +8,7 @@ from ykdl.util.match import match1, matchall
 from ykdl.compact import compact_bytes
 
 import hashlib
-from xml.dom.minidom import parseString
+import json
 
 
 def sign_api_url(api_url, params_str, skey):
@@ -18,19 +18,25 @@ def sign_api_url(api_url, params_str, skey):
 def parse_cid_playurl(xml):
     urls = []
     size = 0
-    doc = parseString(xml.encode('utf-8'))
-    fmt = doc.getElementsByTagName('format')[0].firstChild.nodeValue
-    qlt = doc.getElementsByTagName('quality')[0].firstChild.nodeValue
-    aqlts = doc.getElementsByTagName('accept_quality')[0].firstChild.nodeValue.split(',')
-    for durl in doc.getElementsByTagName('durl'):
-        urls.append('https' + durl.getElementsByTagName('url')[0].firstChild.nodeValue[4:])
-        size += int(durl.getElementsByTagName('size')[0].firstChild.nodeValue)
+    doc = json.loads(xml)["data"]
+    
+    fmt = doc["format"]
+    qlt = doc["quality"]
+    if fmt == 'hdflv2' and qlt == 120:
+        fmt = 'flv4k'
+    aqlts = doc["accept_quality"]
+    for durl in doc["durl"]:
+        urls.append(durl["url"])
+        size += int(durl["size"])
     return urls, size, fmt, qlt, aqlts
 
 class BiliBase(VideoExtractor):
     format_2_type_profile = {
-        'hdflv2': ('BD', u'高清 1080P+'), #112
+        'flv4k' : ('QHD', u'高清 4K'), #120
+        'flv_p60': ('F60',u'高清 1080P60'), #116
+        'hdflv2': ('FD', u'高清 1080P+'), #112
         'flv':    ('BD', u'高清 1080P'),  #80
+        'flv720_p60': ('T60', u'高清 720P60'), #64
         'flv720': ('TD', u'高清 720P'),   #64
         'hdmp4':  ('TD', u'高清 720P'),   #48
         'flv480': ('HD', u'清晰 480P'),   #32
@@ -38,7 +44,7 @@ class BiliBase(VideoExtractor):
         'flv360': ('SD', u'流畅 360P'),   #15
         }
 
-    sorted_format = ['BD', 'TD', 'HD', 'SD']
+    sorted_format = ['QHD','F60','FD','BD','T60', 'TD', 'HD', 'SD']
 
     def prepare(self):
         info = VideoInfo(self.name)
@@ -47,15 +53,11 @@ class BiliBase(VideoExtractor):
         if fake_headers['Cookie']:
             info.extra['cookie'] = fake_headers['Cookie']
 
-        self.vid, info.title, info.artist = self.get_page_info()
+        self.bvid, self.vid, info.title, info.artist = self.get_page_info()
 
         assert self.vid, "can't play this video: {}".format(self.url)
 
-        def get_video_info(qn=0):
-            # need login with "qn=112"
-            #if int(qn) > 80:
-            #    return
-
+        def get_video_info(qn=120):
             api_url = self.get_api_url(qn)
             html = get_content(api_url)
             self.logger.debug('HTML> ' + html)
@@ -73,7 +75,7 @@ class BiliBase(VideoExtractor):
                 info.stream_types.append(st)
                 info.streams[st] = {'container': ext, 'video_profile': prf, 'src' : urls, 'size': size}
 
-            if qn == 0:
+            if qn == 120:
                 aqlts.remove(qlt)
                 for aqlt in aqlts:
                     get_video_info(aqlt)
